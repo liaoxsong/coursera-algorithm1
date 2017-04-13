@@ -4,18 +4,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-
 import edu.princeton.cs.algs4.In;
-import edu.princeton.cs.algs4.Merge;
 import edu.princeton.cs.algs4.StdDraw;
 import edu.princeton.cs.algs4.StdOut;
 
+//91 out 100 score
 public class FastCollinearPoints {
 
 	private List<LineSegment> mLineSegments;
-
+	private final int BINGO = 4;
+	
 	public FastCollinearPoints(Point[] points) {
 		if (points == null)
 			throw new NullPointerException("points array is null");
@@ -36,7 +35,7 @@ public class FastCollinearPoints {
 			double currentSlope = Double.NEGATIVE_INFINITY;
 			for (int j = i + 1; j < N; j++) {
 				double slope = points[i].slopeTo(points[j]);
-				System.out.println("at " + j + "|" + points[j] + " 's slope:" + slope);
+				//System.out.println("at " + j + "|" + points[j] + " 's slope:" + slope);
 				if (slope == currentSlope) {
 					List<Point> pts = map.get(slope);
 					pts.add(points[j]);
@@ -46,16 +45,18 @@ public class FastCollinearPoints {
 					map.put(currentSlope, new ArrayList<Point>(Arrays.asList(points[i], points[j])));
 				}
 			}
+			/** 
+			 * sub-segments are still added for 5 points or longer.. leave if for now
+			 * */
 			for (Double d : map.keySet()) {
 				List<Point> pts = map.get(d);
-				if (pts.size() >= 4) {
+				if (pts.size() >= BINGO) {
 					Collections.sort(pts);
-					System.out.println("adding " + pts.get(0) + " ," + pts.get(pts.size() - 1));
+					//System.out.println("adding " + pts.get(0) + " ," + pts.get(pts.size() - 1));
 					mLineSegments.add(new LineSegment(pts.get(0), pts.get(pts.size() - 1)));
 				}
 			}
 		}
-
 	}
 
 	// the number of line segments
@@ -73,7 +74,7 @@ public class FastCollinearPoints {
 
 		String localFile = "/Users/song/Documents/EclipseWorkspace/HelloEclipse/src/collinear/input6.txt";
 		// File file = new File(args[0]);
-		File file = new File(localFile);
+		File file = new File(args[0]);
 		In in = new In(file);
 		int n = in.readInt();
 
@@ -83,12 +84,6 @@ public class FastCollinearPoints {
 			int y = in.readInt();
 			points[i] = new Point(x, y);
 		}
-		// points[0] = new Point(0, 1);
-		// points[1] = new Point(2, 2);
-		// points[2] = new Point(4, 4);
-		// points[3] = new Point(4, 3);
-		// points[4] = new Point(5, 5);
-		// points[5] = new Point(10, 10);
 
 		// draw the points
 		StdDraw.enableDoubleBuffering();
