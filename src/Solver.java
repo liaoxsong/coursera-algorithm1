@@ -1,3 +1,4 @@
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 
@@ -10,8 +11,10 @@ import edu.princeton.cs.algs4.StdOut;
 public class Solver {
 	
 	private boolean mSolvable;
+	private boolean mTwinSolvable;
 	
 	private MinPQ<SearchNode> mPQ, mPQTwin;
+	private SearchNode mEndNode;
 	
 	private static class SearchNode {
 		Board board;
@@ -35,7 +38,7 @@ public class Solver {
 				} else if (thisNode.board.hamming() + thisNode.moves > otherNode.board.hamming() + otherNode.moves) {
 					return 1;
 				}
-				
+				//the more moves it has, the priorier we use?
 				if (thisNode.moves > otherNode.moves) {
 					return -1;
 				} else if (thisNode.moves < otherNode.moves) {
@@ -55,7 +58,12 @@ public class Solver {
 					return 1;
 				}
 			
-				//same priority..check moves, moves less is on top
+				//the more moves it has, the priorier we use?
+				if (thisNode.moves > otherNode.moves) {
+					return -1;
+				} else if (thisNode.moves < otherNode.moves) {
+					return 1;
+				}
 				return 0;
 			}
 		};
@@ -70,65 +78,69 @@ public class Solver {
 		
 		mPQTwin = new MinPQ<SearchNode>(SearchNode.manhattanComparator);
 		mPQTwin.insert(new SearchNode(initial.twin(), null, 0));
-
-		while(!mPQ.min().board.isGoal()) {
-			StdDraw.pause(20);
-			//mCurrentMoves+=1;
 		
-			SearchNode node = mPQ.delMin();
-			StdOut.println("moves:" + node.moves);
-			StdOut.println("current min with priority:" + node.priority + "\n" + node.board) ;
-			//interchanging this and twin node, see whoever find solution first
-			int addMoves = node.moves + 1;
-			for(Board b: node.board.neighbors()) {
-				SearchNode previous = node.previous;		
-				if (previous != null && b.equals(previous)) continue; //optimization
-				
-				SearchNode next = new SearchNode(b, node, addMoves);
-				
-				StdOut.println("inserting node with moves:" + next.moves + "\n" + next.board) ;
-				mPQ.insert(next);
-			}
-			
-//			SearchNode twinNode = mPQTwin.delMin();
-//			
-//			for(Board b: twinNode.board.neighbors()) {
-//				SearchNode previous = twinNode.previous;
-//				if (previous != null && b.equals(previous)) continue; 
-//				
-//				mPQTwin.insert(new SearchNode(b, previous, mCurrentMoves));
-//			}
+		//StdOut.println("Twin board:\n" + mPQTwin.min().board);
+		while( !mSolvable && !mTwinSolvable) {//while loop循环的前提下必须两个board都是unsolvable的，只要有一个提前解读了loop就会停止
+			mSolvable = solveStep(mPQ);
+			mTwinSolvable = solveStep(mPQTwin);
+		}
+	}
+	
+	private boolean solveStep(MinPQ<SearchNode> pq) {
+		SearchNode node = pq.delMin();
+		if (node.board.isGoal()) {
+			mEndNode = node;
+			return true;
 		}
 		
-		//only original board have a solution, then we have a solvable board
-		this.mSolvable = mPQ.min().board.isGoal();
-		System.out.println(this.mSolvable? "solution found": "not found");
+		int addMoves = node.moves + 1;
+		for(Board b: node.board.neighbors()){
+			if(node.previous == null || !b.equals(node.previous.board)) {
+    			SearchNode neighbor = new SearchNode(b, node, addMoves);
+    			pq.insert(neighbor);
+    		}
+		} 		
+		return false;
 	}
+	
 	public boolean isSolvable() {
 		return this.mSolvable;
 	}
 	
+
 	public int moves() {
-		if (!isSolvable()) return 0;
-		return mPQ.min().moves;
+		if(mSolvable) {
+			int moves = 0;
+			SearchNode temp = mEndNode;
+			while(temp.previous != null) {
+				moves++;
+				
+				temp = temp.previous;
+			}
+			return moves;
+		}
+		return -1;
 	}
 	
 	public Iterable<Board> solution(){
 		if (!isSolvable()) return null;
+		SearchNode temp = mEndNode;
+		if (mPQ.isEmpty()) return Arrays.asList(temp.board);
+		
 		Stack<Board> stack = new Stack<>();
-		SearchNode node = mPQ.min();
-		while(node != null) {
-			stack.push(node.board);
-			node = node.previous;
+		
+		while(temp != null) {
+			stack.push(temp.board);
+			temp = temp.previous;
 		}
 		return stack;
 	}
 	
 	public static void main(String []args){ 
-		   // create initial board from file
 		
-		String file = "/Users/song/Documents/EclipseWorkspace/HelloEclipse/src/8puzzle/puzzle3x3-unsolvable.txt";
-	    In in = new In(file);
+		String file = "/Users/song/Documents/EclipseWorkspace/HelloEclipse/src/8puzzle/puzzle05.txt";
+		
+		In in = new In(args.length == 0 ? file : args[0]);
 	    int n = in.readInt();
 	    int[][] blocks = new int[n][n];
 	    for (int i = 0; i < n; i++)
@@ -145,7 +157,7 @@ public class Solver {
 	    else {
 	        StdOut.println("Minimum number of moves = " + solver.moves());
 	        for (Board board : solver.solution())
-	            StdOut.println(board);
+	            StdOut.println("solution:\n" + board);
 	    }
 	}
 }

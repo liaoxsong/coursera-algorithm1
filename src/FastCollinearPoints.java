@@ -8,6 +8,7 @@ import java.util.List;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdDraw;
 import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.StdRandom;
 
 //91 out 100 score
 public class FastCollinearPoints {
@@ -27,7 +28,6 @@ public class FastCollinearPoints {
 
 	private void findCollinearPoints(Point[] points) {
 		int N = points.length;
-
 		for (int i = 0; i < N - 1; i++) {
 			HashMap<Double, List<Point>> map = new HashMap<>();
 			Arrays.sort(points, i + 1, points.length, points[i].slopeOrder());
